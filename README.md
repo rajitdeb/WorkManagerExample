@@ -27,8 +27,7 @@ class MyWorker(appContext: Context, workerParams: WorkerParameters) :
 Override the `doWork` method within the `MyWorker` class to contain the background task logic.
 
 ```kotlin
-class MyWorker(appContext: Context, workerParams: WorkerParameters) :
-    Worker(appContext, workerParams) {
+class MyWorker(appContext: Context, workerParams: WorkerParameters): Worker(appContext, workerParams) {
     override fun doWork(): Result {
         // Business logic goes here
         // Return Result.success(), Result.failure(), or Result.retry() based on the business logic
@@ -39,7 +38,7 @@ class MyWorker(appContext: Context, workerParams: WorkerParameters) :
 
 ### 3. Create a OneTimeRequest
 
-Create a `OneTimeRequest` (a direct subclass of WorkRequest) using the `OneTimeRequest.Builder()`
+Create a `OneTimeWorkRequest` (a direct subclass of WorkRequest) using the `OneTimeWorkRequest.Builder()`
 
 ```kotlin
 val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java).build()
@@ -47,7 +46,7 @@ val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java).build(
 
 ### 4. Enqueue the Work Request
 
-Enqueue the work request using the following command:
+Enqueue the `oneTimeWorkRequest` using the following command:
 
 ```kotlin
 WorkManager.getInstance(context).enqueue(oneTimeWorkRequest)
