@@ -36,6 +36,38 @@ class MyWorker(appContext: Context, workerParams: WorkerParameters): Worker(appC
 }
 ```
 
+#### 2.1 Input Data and Output Data
+In this section, we send input data to the `MyWorker` class from `MainActivity` and send output data from the `MyWorker` class to the MainActivity, where we observe the `oneTimeWorkRequest`.
+
+```kotlin
+// Sending Data via WorkRequest to MyWorker
+val data = Data.Builder()
+    .putString(DATA_KEY_DESC, "Hey, i'm sending work manager data")
+    .build()
+
+// Second Point of Contact - WorkRequest of type OneTime
+val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java)
+            .setInputData(data) // Binding Input Data to OneTimeWorkRequest
+            .build()
+```
+```kotlin
+// Retrieving input data in MyWorker.kt provided by OneTimeWorkRequest from MainActivity
+val inputDescData = inputData.getString(DATA_KEY_DESC)
+
+if(inputDescData != null) {
+    displayNotification("Test Task", inputDescData)
+}
+
+// Sending output data to the WorkInfo Observer
+val data = Data.Builder()
+    .putString(OUTPUT_KEY_DESC, "This is Output Work Data :)")
+    .build()
+
+// Passing the output data via Result.Success()
+return Result.success(data)
+
+```
+
 ### 3. Create a OneTimeRequest
 
 Create a `OneTimeWorkRequest` (a direct subclass of WorkRequest) using the `OneTimeWorkRequest.Builder()`
@@ -65,5 +97,23 @@ WorkManager.getInstance(applicationContext)
         // Handle the work status as needed
     }
 ```
+#### Receiving the Output Data in the WorkManager Observer in MainActivity
 
+```kotlin
+// Optional - Check the progress of the work request
+WorkManager
+    .getInstance(applicationContext)
+    .getWorkInfoByIdLiveData(oneTimeWorkRequest.id)
+    .observe(this) { workInfo ->
+
+        if(workInfo.state.isFinished) {
+            // Getting Output Data from WorkInfo
+            val outputDataFromWorker = workInfo.outputData.getString(OUTPUT_KEY_DESC)
+            _binding.workInfoTV.append("\nResult: $outputDataFromWorker")
+        }
+
+        val result = workInfo.state.name
+        _binding.workInfoTV.append("\n$result")
+    }
+```
 
