@@ -3,11 +3,13 @@ package com.rajit.workmanagerexample
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.work.Data
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+
+const val OUTPUT_KEY_DESC = "output_key_desc"
 
 // First point of contact - Worker Class
 class MyWorker(
@@ -15,8 +17,23 @@ class MyWorker(
     workerParams: WorkerParameters
 ) : Worker(context, workerParams) {
     override fun doWork(): Result {
-        displayNotification("Test Task", "Task completed successfully!")
-        return Result.success()
+
+        // Retrieving input data provided by OneTimeWorkRequest from MainActivity
+        val inputDescData = inputData.getString(DATA_KEY_DESC)
+
+        if(inputDescData != null) {
+            displayNotification("Test Task", inputDescData)
+        } else {
+            displayNotification("Test Task", "This is sample work data!")
+        }
+
+        // Sending output data to the WorkInfo Observer
+        val data = Data.Builder()
+            .putString(OUTPUT_KEY_DESC, "This is Output Work Data :)")
+            .build()
+
+        // Passing the output data via Result.Success()
+        return Result.success(data)
     }
 
     private fun displayNotification(title: String, description: String) {
