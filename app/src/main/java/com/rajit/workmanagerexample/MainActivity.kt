@@ -2,6 +2,7 @@ package com.rajit.workmanagerexample
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
@@ -23,9 +24,15 @@ class MainActivity : AppCompatActivity() {
             .putString(DATA_KEY_DESC, "Hey, i'm sending work manager data")
             .build()
 
+        // Adding Constraints to the WorkRequest
+        val constraints = Constraints.Builder()
+            .setRequiresBatteryNotLow(true) // Only executes the work if the device's battery isn't low
+            .build()
+
         // Second Point of Contact - WorkRequest of type OneTime
         val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java)
             .setInputData(data) // Binding Input Data to OneTimeWorkRequest
+            .setConstraints(constraints) // Setting the Constraints
             .build()
 
         _binding.performWorkBtn.setOnClickListener {
