@@ -27,7 +27,8 @@ class MyWorker(appContext: Context, workerParams: WorkerParameters) :
 Override the `doWork` method within the `MyWorker` class to contain the background task logic.
 
 ```kotlin
-class MyWorker(appContext: Context, workerParams: WorkerParameters): Worker(appContext, workerParams) {
+class MyWorker(appContext: Context, workerParams: WorkerParameters) :
+    Worker(appContext, workerParams) {
     override fun doWork(): Result {
         // Business logic goes here
         // Return Result.success(), Result.failure(), or Result.retry() based on the business logic
@@ -37,7 +38,9 @@ class MyWorker(appContext: Context, workerParams: WorkerParameters): Worker(appC
 ```
 
 #### 2.1 Input Data and Output Data
-In this section, we send input data to the `MyWorker` class from `MainActivity` and send output data from the `MyWorker` class to the MainActivity, where we observe the `oneTimeWorkRequest`.
+
+In this section, we send input data to the `MyWorker` class from `MainActivity` and send output data
+from the `MyWorker` class to the MainActivity, where we observe the `oneTimeWorkRequest`.
 
 ```kotlin
 // Sending Data via WorkRequest to MyWorker
@@ -47,14 +50,15 @@ val data = Data.Builder()
 
 // Second Point of Contact - WorkRequest of type OneTime
 val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java)
-            .setInputData(data) // Binding Input Data to OneTimeWorkRequest
-            .build()
+    .setInputData(data) // Binding Input Data to OneTimeWorkRequest
+    .build()
 ```
+
 ```kotlin
 // Retrieving input data in MyWorker.kt provided by OneTimeWorkRequest from MainActivity
 val inputDescData = inputData.getString(DATA_KEY_DESC)
 
-if(inputDescData != null) {
+if (inputDescData != null) {
     displayNotification("Test Task", inputDescData)
 }
 
@@ -68,9 +72,26 @@ return Result.success(data)
 
 ```
 
+#### 2.2 Adding Constraints
+
+In this section, we add constraints to the `OneTimeWorkRequest` to only execute the work if the
+device has a decent amount of battery left and is not completely drained.
+
+```kotlin
+val contraints = Constraints.Builder()
+    .set.setRequiresBatteryNotLow(true) // Only executes the work if the device's battery isn't low
+    .build()
+
+val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java)
+    .setInputData(data) // Binding Input Data to OneTimeWorkRequest
+    .setConstraints(constraints) // Setting the Constraints
+    .build()
+```
+
 ### 3. Create a OneTimeRequest
 
-Create a `OneTimeWorkRequest` (a direct subclass of WorkRequest) using the `OneTimeWorkRequest.Builder()`
+Create a `OneTimeWorkRequest` (a direct subclass of WorkRequest) using
+the `OneTimeWorkRequest.Builder()`
 
 ```kotlin
 val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java).build()
@@ -97,6 +118,7 @@ WorkManager.getInstance(applicationContext)
         // Handle the work status as needed
     }
 ```
+
 #### Receiving the Output Data in the WorkManager Observer in MainActivity
 
 ```kotlin
@@ -106,7 +128,7 @@ WorkManager
     .getWorkInfoByIdLiveData(oneTimeWorkRequest.id)
     .observe(this) { workInfo ->
 
-        if(workInfo.state.isFinished) {
+        if (workInfo.state.isFinished) {
             // Getting Output Data from WorkInfo
             val outputDataFromWorker = workInfo.outputData.getString(OUTPUT_KEY_DESC)
             _binding.workInfoTV.append("\nResult: $outputDataFromWorker")
