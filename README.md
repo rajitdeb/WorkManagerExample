@@ -78,7 +78,7 @@ In this section, we add constraints to the `OneTimeWorkRequest` to only execute 
 device has a decent amount of battery left and is not completely drained.
 
 ```kotlin
-val contraints = Constraints.Builder()
+val constraints = Constraints.Builder()
     .set.setRequiresBatteryNotLow(true) // Only executes the work if the device's battery isn't low
     .build()
 
