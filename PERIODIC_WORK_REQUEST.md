@@ -10,8 +10,9 @@ background processing in Android more manageable.
 
 ## Implementation
 
-In this section, we only discuss the implementation of `OneTimeWorkRequest`.
-For `PeriodicWorkRequest`, you may refer to <a href="./PERIODIC_WORK_REQUEST.md">this section</a>.
+In this section, we discuss the implementation of `PeriodicWorkRequest` of `WorkManager`. What this
+does is that, it executes the business logic inside it periodically based on the time period
+specified.
 
 ### 1. Create MyWorker Class
 
@@ -43,7 +44,7 @@ class MyWorker(appContext: Context, workerParams: WorkerParameters) :
 #### 2.1 Input Data and Output Data
 
 In this section, we send input data to the `MyWorker` class from `MainActivity` and send output data
-from the `MyWorker` class to the MainActivity, where we observe the `oneTimeWorkRequest`.
+from the `MyWorker` class to the MainActivity, where we observe the `periodicWorkRequest`.
 
 ```kotlin
 // Sending Data via WorkRequest to MyWorker
@@ -58,7 +59,7 @@ val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java)
 ```
 
 ```kotlin
-// Retrieving input data in MyWorker.kt provided by OneTimeWorkRequest from MainActivity
+// Retrieving input data in MyWorker.kt provided by PeriodicWorkRequest from MainActivity
 val inputDescData = inputData.getString(DATA_KEY_DESC)
 
 if (inputDescData != null) {
@@ -77,35 +78,36 @@ return Result.success(data)
 
 #### 2.2 Adding Constraints
 
-In this section, we add constraints to the `OneTimeWorkRequest` to only execute the work if the
+In this section, we add constraints to the `PeriodicWorkRequest` to only execute the work if the
 device has a decent amount of battery left and is not completely drained.
 
 ```kotlin
-val constraints = Constraints.Builder()
-    .set.setRequiresBatteryNotLow(true) // Only executes the work if the device's battery isn't low
+// Network related Constraint
+val networkConstraint = Constraints.Builder()
+    .setRequiredNetworkType(NetworkType.CONNECTED)
     .build()
 
-val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java)
-    .setInputData(data) // Binding Input Data to OneTimeWorkRequest
-    .setConstraints(constraints) // Setting the Constraints
-    .build()
 ```
 
 ### 3. Create a OneTimeRequest
 
-Create a `OneTimeWorkRequest` (a direct subclass of WorkRequest) using
-the `OneTimeWorkRequest.Builder()`
+Create a `PeriodicWorkRequest` (a direct subclass of WorkRequest) using
+the `PeriodicWorkRequest.Builder()`
 
 ```kotlin
-val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java).build()
+// Creating WorkRequest of type PeriodicWorkRequest which has a minimum specified time of 15 Minutes by the System
+val periodicWorkRequest = PeriodicWorkRequest.Builder(MyWorker::class.java, 15, TimeUnit.MINUTES)
+    .setInputData(data)
+    .setConstraints(networkConstraint)
+    .build()
 ```
 
 ### 4. Enqueue the Work Request
 
-Enqueue the `oneTimeWorkRequest` using the following command:
+Enqueue the `periodicWorkRequest` using the following command:
 
 ```kotlin
-WorkManager.getInstance(context).enqueue(oneTimeWorkRequest)
+WorkManager.getInstance(context).enqueue(periodicWorkRequest)
 ```
 
 ### Optional: Track Work Progress
@@ -115,7 +117,7 @@ the `getWorkInfoByIdLiveData` method to get real-time updates on the work status
 
 ```kotlin
 WorkManager.getInstance(applicationContext)
-    .getWorkInfoByIdLiveData(oneTimeWorkRequest.id)
+    .getWorkInfoByIdLiveData(periodicWorkRequest.id)
     .observe(this) { workInfo ->
         val result = workInfo.state.name
         // Handle the work status as needed
@@ -128,7 +130,7 @@ WorkManager.getInstance(applicationContext)
 // Optional - Check the progress of the work request
 WorkManager
     .getInstance(applicationContext)
-    .getWorkInfoByIdLiveData(oneTimeWorkRequest.id)
+    .getWorkInfoByIdLiveData(periodicWorkRequest.id)
     .observe(this) { workInfo ->
 
         if (workInfo.state.isFinished) {
@@ -141,4 +143,3 @@ WorkManager
         _binding.workInfoTV.append("\n$result")
     }
 ```
-
