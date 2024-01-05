@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.Data
 import androidx.work.Worker
@@ -17,6 +18,8 @@ class MyWorker(
     workerParams: WorkerParameters
 ) : Worker(context, workerParams) {
     override fun doWork(): Result {
+
+        Log.i("MyWorker", "MyWorker Called!")
 
         // Retrieving input data provided by OneTimeWorkRequest from MainActivity
         val inputDescData = inputData.getString(DATA_KEY_DESC)

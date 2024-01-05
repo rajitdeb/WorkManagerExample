@@ -4,9 +4,12 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.work.Constraints
 import androidx.work.Data
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
+import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.rajit.workmanagerexample.databinding.ActivityMainBinding
+import java.util.concurrent.TimeUnit
 
 const val DATA_KEY_DESC = "data_key_desc"
 
@@ -29,6 +32,17 @@ class MainActivity : AppCompatActivity() {
             .setRequiresBatteryNotLow(true) // Only executes the work if the device's battery isn't low
             .build()
 
+        // Network related Constraint
+        val networkConstraint = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        // Creating WorkRequest of type PeriodicWorkRequest which has a minimum specified time of 15 Minutes by the System
+        val periodicWorkRequest = PeriodicWorkRequest.Builder(MyWorker::class.java, 15, TimeUnit.MINUTES)
+            .setInputData(data)
+            .setConstraints(networkConstraint)
+            .build()
+
         // Second Point of Contact - WorkRequest of type OneTime
         val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java)
             .setInputData(data) // Binding Input Data to OneTimeWorkRequest
@@ -38,6 +52,10 @@ class MainActivity : AppCompatActivity() {
         _binding.performWorkBtn.setOnClickListener {
             // Third Point of Contact - Enqueue the WorkRequest through WorkManager
             WorkManager.getInstance(applicationContext).enqueue(oneTimeWorkRequest)
+        }
+
+        _binding.performPeriodicWorkBtn.setOnClickListener {
+            WorkManager.getInstance(applicationContext).enqueue(periodicWorkRequest)
         }
 
         // Optional - Check the progress of the work request
@@ -54,6 +72,22 @@ class MainActivity : AppCompatActivity() {
 
                 val result = workInfo.state.name
                 _binding.workInfoTV.append("\n$result")
+            }
+
+        // Periodic Work Observer
+        WorkManager
+            .getInstance(applicationContext)
+            .getWorkInfoByIdLiveData(periodicWorkRequest.id)
+            .observe(this) { workInfo ->
+
+                if(workInfo.state.isFinished) {
+                    val outputDataFromPeriodicWork = workInfo.outputData.getString(OUTPUT_KEY_DESC)
+                    _binding.periodicWorkInfoTV.append("\nResult: $outputDataFromPeriodicWork - ${System.currentTimeMillis()}")
+                }
+
+                val workerState = workInfo.state.name
+                _binding.periodicWorkInfoTV.append("\n$workerState")
+
             }
 
     }
