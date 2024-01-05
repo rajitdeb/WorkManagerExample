@@ -79,7 +79,7 @@ return Result.success(data)
 #### 2.2 Adding Constraints
 
 In this section, we add constraints to the `PeriodicWorkRequest` to only execute the work if the
-device has a decent amount of battery left and is not completely drained.
+device has internet connectivity of any type (Mobile Data or Wi-Fi).
 
 ```kotlin
 // Network related Constraint
