@@ -159,3 +159,10 @@ WorkManager
     }
 ```
 
+### Cancelling the Unique Periodic Work
+To cancel all the work, we make use of the `cancelAllWork()` method. It only cancels the unfinished work and not the ongoing one. The command for cancelling all work is:
+```kotlin
+// ⚠️Be Cautious! While using this command, as this may lead to the cancellation of all work including the ones that is required by other modules.
+// Stop all the Unfinished already queued Work Request
+WorkManager.getInstance(applicationContext).cancelAllWork()
+```
