@@ -8,6 +8,23 @@ This guide provides a step-by-step walkthrough for implementing a simple backgro
 WorkManager in Android. WorkManager is part of the Android Jetpack library, designed to make
 background processing in Android more manageable.
 
+## Work State in Work Manager
+
+There are two types of Work States in Work Manager - `One-Time Work State`,
+and `Periodic Work State`.
+
+### One-Time Work State Diagram
+
+| One-Time Work State Diagram                                                          | Explanation                                                                                           |
+|--------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| [![image.png](https://i.postimg.cc/m2nNKPPd/image.png)](https://postimg.cc/1fpqq5c6) | Here, there are 3 terminal states for a One-time Work Request - `SUCCESS`, `FAILURE`, and `CANCELLED` |
+
+### Periodic Work State Diagram
+
+| One-Time Work State Diagram                                                          | Explanation                                                                                                                                                                                                                                                                                                                                                                              |
+|--------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [![image.png](https://i.postimg.cc/g2TRBj0Y/image.png)](https://postimg.cc/87Lj71W3) | Here, there is only 1 terminal state for a Periodic Work Request - `CANCELLED`. Periodic Work Request is never complete except when it is explicitly `CANCELLED`. So, there is no SUCCESS or FAILURE terminal state.<br><br>Periodic Work Request should always be `unique` and should have a `name`, in order to avoid duplication of the same work request doing the exact same thing. |
+
 ## Implementation
 
 In this section, we only discuss the implementation of `OneTimeWorkRequest`.
