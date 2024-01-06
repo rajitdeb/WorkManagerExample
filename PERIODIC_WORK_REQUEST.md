@@ -1,97 +1,147 @@
-# WorkManagerExample
+Skip to content
+rajitdeb
+/
+WorkManagerExample
 
-A sample app to demonstrate the usage of Work Manager in Android
+Type / to search
 
-## Overview
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+Settings
+Files
+Go to file
+t
+.idea
+app
+gradle
+.gitignore
+PERIODIC_WORK_REQUEST.md
+README.md
+build.gradle.kts
+gradle.properties
+gradlew
+gradlew.bat
+settings.gradle.kts
+Editing PERIODIC_WORK_REQUEST.md in WorkManagerExample
+BreadcrumbsWorkManagerExample
+/
+PERIODIC_WORK_REQUEST.md
+in
+master
 
-This guide provides a step-by-step walkthrough for implementing a simple background task using
-WorkManager in Android. WorkManager is part of the Android Jetpack library, designed to make
-background processing in Android more manageable.
+Edit
 
-## Implementation
+Preview
+Indent mode
 
-In this section, we discuss the implementation of `PeriodicWorkRequest` of `WorkManager`. What this
-does is that, it executes the business logic inside it periodically based on the time period
-specified.
+Spaces
+Indent size
 
-### 1. Create MyWorker Class
+4
+Line wrap mode
 
-Create a `MyWorker` class by extending the `androidx.Worker` class and passing the `context`
-and `workerParams` as parameters.
-
-```kotlin
-class MyWorker(appContext: Context, workerParams: WorkerParameters) :
-    Worker(appContext, workerParams) {
-    // Class implementation
-}
-```
-
-### 2. Override the doWork Method
-
-Override the `doWork` method within the `MyWorker` class to contain the background task logic.
-
-```kotlin
-class MyWorker(appContext: Context, workerParams: WorkerParameters) :
-    Worker(appContext, workerParams) {
-    override fun doWork(): Result {
-        // Business logic goes here
-        // Return Result.success(), Result.failure(), or Result.retry() based on the business logic
-        return Result.success()
-    }
-}
-```
-
-#### 2.1 Input Data and Output Data
-
-In this section, we send input data to the `MyWorker` class from `MainActivity` and send output data
-from the `MyWorker` class to the MainActivity, where we observe the `periodicWorkRequest`.
-
-```kotlin
-// Sending Data via WorkRequest to MyWorker
-val data = Data.Builder()
-    .putString(DATA_KEY_DESC, "Hey, i'm sending work manager data")
-    .build()
-
-// Second Point of Contact - WorkRequest of type OneTime
-val oneTimeWorkRequest = OneTimeWorkRequest.Builder(MyWorker::class.java)
-    .setInputData(data) // Binding Input Data to OneTimeWorkRequest
-    .build()
-```
-
-```kotlin
-// Retrieving input data in MyWorker.kt provided by PeriodicWorkRequest from MainActivity
-val inputDescData = inputData.getString(DATA_KEY_DESC)
-
-if (inputDescData != null) {
-    displayNotification("Test Task", inputDescData)
-}
-
-// Sending output data to the WorkInfo Observer
-val data = Data.Builder()
-    .putString(OUTPUT_KEY_DESC, "This is Output Work Data :)")
-    .build()
-
-// Passing the output data via Result.Success()
-return Result.success(data)
-
-```
-
-#### 2.2 Adding Constraints
-
-In this section, we add constraints to the `PeriodicWorkRequest` to only execute the work if the
-device has internet connectivity of any type (Mobile Data or Wi-Fi).
-
-```kotlin
-// Network related Constraint
-val networkConstraint = Constraints.Builder()
-    .setRequiredNetworkType(NetworkType.CONNECTED)
-    .build()
-
-```
-
-### 3. Create a OneTimeRequest
-
-Create a `PeriodicWorkRequest` (a direct subclass of WorkRequest) using
+Soft wrap
+Editing PERIODIC_WORK_REQUEST.md file contents
+Selection deleted
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
 the `PeriodicWorkRequest.Builder()`
 
 ```kotlin
@@ -104,6 +154,20 @@ val periodicWorkRequest = PeriodicWorkRequest.Builder(MyWorker::class.java, 15, 
 
 ### 4. Enqueue the Work Request
 
+✔️<b>BEST PRACTICE:</b><br>
+Whenever we're using periodic work request we should always use unique periodic work request in order to prevent duplicate work requests fulfilling the same purpose. So the command is:
+
+```kotlin
+// While using PeriodicWorkRequest always try using `enqueuePeriodicWork()`
+// to avoid duplicating the already existing work request that does the exact same thing
+WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+    "myWork", // Used to uniquely identify each work request
+    ExistingPeriodicWorkPolicy.KEEP, // Keeps the unfinished work and doesn't create a new one
+    periodicWorkRequest
+)
+```
+
+❌<b>NOT SO-GOOD PRACTICE:</b><br>
 Enqueue the `periodicWorkRequest` using the following command:
 
 ```kotlin
@@ -112,7 +176,29 @@ WorkManager.getInstance(context).enqueue(periodicWorkRequest)
 
 ### Optional: Track Work Progress
 
-Optionally, track the progress of the work by observing the work status. Use
+#### Observing Unique Periodic Work Request (by name)
+```kotlin
+// Observer for Unique Periodic Work
+WorkManager
+    .getInstance(applicationContext)
+    .getWorkInfosForUniqueWorkLiveData("myWork")
+    .observe(this) { workInfoList ->
+
+        workInfoList.forEach { workInfo ->
+            if (workInfo.state.isFinished) {
+                val outputDataFromPeriodicWork = workInfo.outputData.getString(OUTPUT_KEY_DESC)
+                _binding.periodicWorkInfoTV.append("\nResult: $outputDataFromPeriodicWork - ${System.currentTimeMillis()}")
+            }
+
+            val workerState = workInfo.state.name
+            _binding.periodicWorkInfoTV.append("\n$workerState")
+        }
+    }
+```
+
+
+#### Observing Generic Periodic Work Request
+Track the progress of the generic periodic work by observing the work status. Use
 the `getWorkInfoByIdLiveData` method to get real-time updates on the work status.
 
 ```kotlin
@@ -143,3 +229,13 @@ WorkManager
         _binding.workInfoTV.append("\n$result")
     }
 ```
+### Cancelling the Unique Periodic Work
+To cancel the unique periodic work, we make use of the `cancelUniqueWork()` method and pass the `name` of the work as parameter. It only finishes the unfinished work and not the ongoing one. The command for cancelling unique periodic work is:
+```kotlin
+// Stop the Unfinished already queued Unique Periodic Work Request
+WorkManager.getInstance(applicationContext).cancelUniqueWork("myWork")
+```
+Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
+No file chosen
+Attach files by dragging & dropping, selecting or pasting them.
+Editing WorkManagerExample/PERIODIC_WORK_REQUEST.md at master · rajitdeb/WorkManagerExample
