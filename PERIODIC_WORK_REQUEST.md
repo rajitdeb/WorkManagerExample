@@ -89,7 +89,7 @@ val networkConstraint = Constraints.Builder()
 
 ```
 
-### 3. Create a OneTimeRequest
+### 3. Create a PeriodicWorkRequest
 
 Create a `PeriodicWorkRequest` (a direct subclass of WorkRequest) using
 the `PeriodicWorkRequest.Builder()`
@@ -103,7 +103,20 @@ val periodicWorkRequest = PeriodicWorkRequest.Builder(MyWorker::class.java, 15, 
 ```
 
 ### 4. Enqueue the Work Request
+✔️<b>BEST PRACTICE:</b><br>
+Whenever we're using periodic work request we should always use unique periodic work request in order to prevent duplicate work requests fulfilling the same purpose. So the command is:
 
+```kotlin
+// While using PeriodicWorkRequest always try using `enqueuePeriodicWork()`
+// to avoid duplicating the already existing work request that does the exact same thing
+WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+    "myWork", // Used to uniquely identify each work request
+    ExistingPeriodicWorkPolicy.KEEP, // Keeps the unfinished work and doesn't create a new one
+    periodicWorkRequest
+)
+```
+
+❌<b>NOT SO-GOOD PRACTICE:</b><br>
 Enqueue the `periodicWorkRequest` using the following command:
 
 ```kotlin
@@ -111,8 +124,22 @@ WorkManager.getInstance(context).enqueue(periodicWorkRequest)
 ```
 
 ### Optional: Track Work Progress
+#### Observing Unique Periodic Work Request (by name)
+```kotlin
+// Observer for Unique Periodic Work
+WorkManager
+    .getInstance(applicationContext)
+    .getWorkInfosForUniqueWorkLiveData("myWork")
+    .observe(this) { workInfoList ->
+        workInfoList.forEach { workInfo ->
+            // Handle the work status as needed
+        }
+    }
+```
 
-Optionally, track the progress of the work by observing the work status. Use
+
+#### Observing Generic Periodic Work Request
+Track the progress of the generic periodic work by observing the work status. Use
 the `getWorkInfoByIdLiveData` method to get real-time updates on the work status.
 
 ```kotlin
@@ -125,12 +152,33 @@ WorkManager.getInstance(applicationContext)
 ```
 
 #### Receiving the Output Data in the WorkManager Observer in MainActivity
-
+<b>Receive Output Data in Unique Periodic Work:</b><br>
 ```kotlin
-// Optional - Check the progress of the work request
+// Observer for Unique Periodic Work
 WorkManager
     .getInstance(applicationContext)
-    .getWorkInfoByIdLiveData(periodicWorkRequest.id)
+    .getWorkInfosForUniqueWorkLiveData("myWork")
+    .observe(this) { workInfoList -> // Getting list of workInfo
+        
+        workInfoList.forEach { workInfo -> // Getting actual workInfo
+            if (workInfo.state.isFinished) {
+                // Getting Output Data from WorkInfo
+                val outputDataFromPeriodicWork = workInfo.outputData.getString(OUTPUT_KEY_DESC)
+                _binding.periodicWorkInfoTV.append("\nResult: $outputDataFromPeriodicWork - ${System.currentTimeMillis()}")
+            }
+
+            val workerState = workInfo.state.name
+            _binding.periodicWorkInfoTV.append("\n$workerState")
+        }
+    }
+```
+
+<b>Receive Output Data in Generic Periodic Work :</b><br>
+```kotlin
+// Optional - Check the progress of the generic periodic work request
+WorkManager
+    .getInstance(applicationContext)
+    .getWorkInfoByIdLiveData(periodicWorkRequest.id) // Generic Periodic Work Request
     .observe(this) { workInfo ->
 
         if (workInfo.state.isFinished) {
@@ -142,4 +190,11 @@ WorkManager
         val result = workInfo.state.name
         _binding.workInfoTV.append("\n$result")
     }
+```
+
+### Cancelling the Unique Periodic Work
+To cancel the unique periodic work, we make use of the `cancelUniqueWork()` method and pass the `name` of the work as parameter. It only finishes the unfinished work and not the ongoing one. The command for cancelling unique periodic work is:
+```kotlin
+// Stop the Unfinished already queued Unique Periodic Work Request
+WorkManager.getInstance(applicationContext).cancelUniqueWork("myWork")
 ```
