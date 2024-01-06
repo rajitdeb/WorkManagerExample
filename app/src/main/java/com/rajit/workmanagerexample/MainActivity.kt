@@ -89,6 +89,14 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
+        _binding.cancelPeriodicWorkBtn.setOnClickListener {
+
+            // Stop the Unfinished already queued Unique Periodic Work Request
+            WorkManager.getInstance(applicationContext)
+                .cancelUniqueWork("myWork")
+
+        }
+
         // Optional - Check the progress of the work request
         WorkManager
             .getInstance(applicationContext)
